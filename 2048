@@ -1,0 +1,376 @@
+//小项目：2048
+
+#include<stdio.h>
+#include <time.h> 
+#include<windows.h>//用于使用Windows自带dos命令中的清屏功能函数
+#include<stdlib.h>
+#include<conio.h>//为了使用getch()函数
+
+int board[4][4];//四行四列的游戏面板，定义二维数组
+int is_over;//是否结束游戏，1结束，0正常
+int if_need_addnum;//设置标记，是否需要生成随机数，1需要，0不需要
+
+int score;//分数
+int best;//最高分
+
+//获取游戏面板上空位数量
+int GetNullCount()
+{
+	int n=0;
+	int i,j;
+	for(i=0;i<4;i++)
+	{
+		for(j=0;j<4;j++)
+		{
+			board[i][j] == 0 ? n++ : 1;//运用三目运算符
+		}
+		return n;//返回空位置数量
+	}
+}
+
+//检验是否输掉游戏函数，设置游戏结束标志
+void CheckOver()
+{
+	int i,j;
+	for(i=0;i<4;i++)
+	{
+		for(j=0;j<3;j++)
+		{
+			//游戏标志置为0，有两个相邻元素相等，不结束 (比较方法：左右、上下)
+			if(board[i][j] == board[i][j+1]  || board[j][i] == board[j+1][i])
+			{
+				is_over = 0;
+				return;
+			}
+		}
+	}
+	is_over = 1;//游戏结束标志置1，游戏结束
+}
+
+
+//生成随机数
+//每次只生成2或者4，设置比例为2:1
+void AddRandNum()
+{
+	int i,j;
+	srand(time(0));
+	int n = rand() %  GetNullCount();//确定生成数位置
+	//确定在哪个空位生成随机数
+	for(i=0;i<4;i++)
+	{
+		for(j=0;j<4;j++)
+		{
+			if(board[i][j] == 0 && n-- == 0)
+			{
+                 board[i][j] = (rand() %3 ? 2 : 4);//在空位随机生成2/4
+		         return ;
+			}
+		}
+	}
+}
+
+
+//刷新界面
+void RefreshShow()
+{
+	//COORD pos={0,0};
+	//SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE),pos);//用于清屏的函数
+
+	system("cls");
+	printf("\n\n");
+    printf("                        ┌────┬────┬────┬────┐\n");
+    for (int i = 0; i < 4; i++)
+    {
+       printf("                        │");
+        for (int j = 0; j < 4; j++)
+      {
+          if (board[i][j] != 0)
+            {
+               if (board[i][j] < 10)
+            {
+                    printf("  %d │", board[i][j]);                    
+                 }
+                 else if (board[i][j] < 100)
+                 {
+                     printf(" %d │", board[i][j]);
+                 }
+                 else if (board[i][j] < 1000)
+                 {
+                     printf(" %d│", board[i][j]);
+                 }
+                 else if (board[i][j] < 10000)
+                 {
+                     printf("%4d│", board[i][j]);
+                 }
+                 else
+                 {
+                     int n = board[i][j];
+                     for (int k = 1; k < 20; k++)
+                     {
+                         n >>= 1;
+                         if (n == 1)
+                         {
+                             printf("2^%02d│", k); /* 超过四位的数字用2的幂形式表示，如2^13形式 */
+                             break;
+                         }
+                     }
+                 }
+             }
+             else printf("    │");
+         }
+         
+         if (i < 3)
+         {
+            printf("\n                        ├────┼────┼────┼────┤\n");
+       }
+        else
+     {
+            printf("\n                        └────┴────┴────┴────┘\n");
+         }
+    }
+ 
+    printf("\n");
+   printf("                            W↑  A←  →D  ↓S");
+
+	if(GetNullCount()==0)
+	{
+		CheckOver();
+		if(is_over)
+		{
+			printf("\rGame Over!\nTry again?[Y/N]");
+		}
+	}
+}
+
+//四个方向移动
+//上
+void MoveUp()
+{
+	int i,j,k;
+	for(i=0;i<4;i++)
+	{
+		for(j=1,k=0;j<4;j++)
+		{
+			if(board[j][i]>0)
+			{
+				if(board[k][i] == board[j][i])//k==j的情况
+				{
+					score += board[k++][i] <<=1;
+					board[j][i]=0;//原来的位置回归0
+					if_need_addnum = 1;
+				}
+				else if(board[k][i] == 0)//k项为空，直接把j复制给k，j置0
+				{
+					board[k][i]=board[j][i];
+					board[j][i]=0;
+					if_need_addnum=1;
+				}
+				else//k不为空，和j不相等，把j赋值给k+1
+				{
+					board[++k][i]=board[j][i];
+					//判断j、k是否原先挨着，若不是，就把j置空
+			    	if(j!= k)
+					{
+						board[j][i]=0;
+						if_need_addnum=1;
+					}
+				}
+			}
+		}
+	}
+}
+
+
+//下
+void MoveDown()
+{
+		int i,j,k;
+	for(i=0;i<4;i++)
+	{
+		for(j=2,k=3;j>=0;j--)
+		{
+			if(board[j][i]>0)
+			{
+				if(board[k][i] == board[j][i])//k==j的情况
+				{
+					score += board[k--][i] <<=1;
+					board[j][i]=0;//原来的位置回归0
+					if_need_addnum = 1;
+				}
+				else if(board[k][i] == 0)//k项为空，直接把j复制给k，j置0
+				{
+					board[k][i]=board[j][i];
+					board[j][i]=0;
+					if_need_addnum=1;
+				}
+				else//k不为空，和j不相等，把j赋值给k+1
+				{
+					board[--k][i]=board[j][i];
+					//判断j、k是否原先挨着，若不是，就把j置空
+					if(j!= k)
+					{
+						board[j][i]=0;
+						if_need_addnum=1;
+					}
+				}
+			}
+		}
+	}
+}
+
+
+//左
+void MoveLeft()
+{
+	int i,j,k;
+	for(i=0;i<4;i++)
+	{
+		for(j=1,k=0;j<4;j++)
+		{
+			if(board[i][j]>0)
+			{
+				if(board[i][k] == board[i][j])//k==j的情况
+				{
+					score += board[i][k++] <<=1;
+					board[i][j]=0;//原来的位置回归0
+					if_need_addnum = 1;
+				}
+				else if(board[i][k] == 0)//k项为空，直接把j复制给k，j置0
+				{
+					board[i][k]=board[i][j];
+					board[i][j]=0;
+					if_need_addnum=1;
+				}
+				else//k不为空，和j不相等，把j赋值给k+1
+				{
+					board[i][++k]=board[i][j];
+					//判断j、k是否原先挨着，若不是，就把j置空
+			    	if(j!= k)
+					{
+						board[i][j]=0;
+						if_need_addnum=1;
+					}
+				}
+			}
+		}
+	}
+}
+
+//右
+void MoveRight()
+{
+	int i,j,k;
+	for(i=0;i<4;i++)
+	{
+		for(j=2,k=3;j>=0;j--)
+		{
+			if(board[i][j]>0)
+			{
+				if(board[i][k] == board[i][j])//k==j的情况
+				{
+					score += board[i][k--] <<=1;
+					board[i][j]=0;//原来的位置回归0
+					if_need_addnum = 1;
+				}
+				else if(board[i][k] == 0)//k项为空，直接把j复制给k，j置0
+				{
+					board[i][k]=board[i][j];
+					board[i][j]=0;
+					if_need_addnum=1;
+				}
+				else//k不为空，和j不相等，把j赋值给k+1
+				{
+					board[i][--k]=board[i][j];
+					//判断j、k是否原先挨着，若不是，就把j置空
+					if(j!= k)
+					{
+						board[i][j]=0;
+						if_need_addnum=1;
+					}
+				}
+			}
+		}
+	}
+}
+
+//重新开始游戏
+void ResetGame()
+{
+	score=0;
+	if_need_addnum = 1;//需要生成随机数
+	is_over = 0;//游戏未结束
+	//游戏初始化的时候有两个2，所以开始后先随机生成一个2，其他为0
+	int n=rand() % 16;
+	int i,j;
+	for(i=0;i<4;i++)
+	{
+		for(j=0;j<4;j++)
+		{
+			board[i][j]=(n-- == 0 ? 2:0); //在某个随机位置生成一个2，其余为0
+		}
+	}
+	AddRandNum();
+	system("cls");//清屏
+	RefreshShow();
+}
+
+
+//开始游戏
+void StartGame()
+{
+	ResetGame();
+	char cmd;
+	while(1)
+	{
+		cmd=getchar();
+		if(is_over)//判断游戏是否已经结束
+		{
+			if(cmd=='y' || cmd=='Y')//如果输入Y/y 游戏重新开始
+			{
+				ResetGame();
+				continue;
+			}
+			else if(cmd=='n' || cmd=='N')//退出游戏
+			{
+				return ;
+			}
+			else
+			{
+				continue;
+			}
+		}
+		if_need_addnum=0;//将标记设置为0，先不需要生成随机数
+		//命令分上下左右，用switch语句实现,wsad分别代表上下左右
+		switch(cmd)
+		{
+		case 'a':
+		case 'A':
+			MoveLeft();
+			break;
+	    case 'd':
+		case 'D':
+			MoveRight();
+			break;
+		case 'w':
+		case 'W':
+			MoveUp();
+			break;
+		case 's':
+		case 'S':
+			MoveDown();
+			break;
+		}
+		if(if_need_addnum)
+		{
+	    	AddRandNum();
+			RefreshShow();
+		}
+	}
+}
+
+
+int main()
+{
+	StartGame();
+	return 0;
+}
