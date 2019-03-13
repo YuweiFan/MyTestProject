@@ -1,0 +1,94 @@
+#include<stdio.h>
+#include<assert.h>
+#include"SeqList.h"
+
+//初始化
+void InitList(PSeqList pl)
+{
+	assert(pl!=NULL);
+	if(pl==NULL)
+	{
+		return ;
+	}
+	pl->cursize =0;
+}
+
+int InsertPos(PSeqList pl,int pos,ELEM_TYPE  val)//插入数据
+{
+	if(pl == NULL)
+	{
+		return 0;
+	}
+	if(pos<0 || pos>pl->cursize || IsFull (pl))
+	{
+		return -1;
+	}
+	for(int i=pl ->cursize ;i>pos;i--)
+	{
+		pl->elem [i]=pl->elem [i-1];
+	}
+	pl->elem [pos]= val;//插入数据
+	pl->cursize++;//因为插入了数据，所以cursize+1
+	return 1;
+}
+
+int DeletePos(PSeqList pl,int pos)//按位删除
+{
+	if(pl == NULL)
+	{
+		return 0;
+	}
+	if(pos<0  || pos>pl->cursize )
+	{
+		return -1;
+	}
+	for(int i=pos;i<pl->cursize-1 ;i++)
+	{
+		pl->elem [i]=pl->elem [i+1];
+	}
+	pl->cursize--;
+	return 1; 
+}
+
+int Search(PSeqList pl,ELEM_TYPE key)//查找元素位置
+{
+	if(pl==NULL)
+	{
+		return 0;
+	}
+	int rt=-1;
+	if(pl != NULL)
+	{
+		for(int i=0;i<pl->cursize ;i++)
+		{
+			if(key==pl->elem [i])
+			{
+				rt=i;
+				break;//找到之后跳出循环
+			}
+		}
+	}
+	return rt;
+}
+
+bool IsFull(PSeqList pl)//判满
+{
+	return pl->cursize ==ARRAY_SIZE ;
+}
+
+void Show(PSeqList pl)//显示
+{
+	for(int i=0;i<pl->cursize ;i++)
+	{
+		printf("%d  ",pl->elem [i]);
+	}
+}
+void Clear(PSeqList pl)//清空数据
+{
+	pl->cursize =0;
+}
+
+void Destroy(PSeqList pl)//销毁顺序表
+{
+	Clear (pl);
+}
