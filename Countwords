@@ -1,0 +1,172 @@
+//统计一本英文书中出现最多的前1000个单词
+
+//求解思路：
+//1、先区分每一个单词，将每一个单词存进一个字符串（字母+非字母）
+//2、储存单词和出现次数，采用结构体，新建一个数据类型，动态创建数组来存储
+//3、需要进行判断，当前单词是否已经存储，若存储，+1，否则，新建一个
+
+#include<stdio.h>
+#include<string.h>
+#include<malloc.h>
+#include<ctype.h>
+#include<stdlib.h>
+//定义一个结构体，存储
+typedef struct Save
+{
+	char word[100];//存储的单词
+	int number;//数量
+}save;
+
+bool Isalpha(char *p)//判断当前字符是否为字母
+{
+	char arr[]="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	int i;
+	for(i=0;arr[i]!='\0';i++)
+	{
+		if(*p==arr[i])
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void Print_allword(save *arr)//打印全部单词
+{
+	int i;
+	for(i=0;arr[i].number!=0;i++)
+	{
+		printf("%d,%s,%d",i,arr[i].word,arr[i].number);
+		printf("\n");
+	}
+	printf("\n");
+}
+
+void Print_word1000(save *arr)//打印前1000个单词
+{
+	int i;
+	for(i=0;i<1000;i++)
+	{
+		printf("%d,%s,%d",i+1,arr[i].word,arr[i].number);
+		printf("\n");
+	}
+	printf("\n");
+}
+
+int Find_index(save *arr,char *brr)//找出已记录单词的下标
+{
+	int i;
+	for(i=0;arr[i].number !=0;i++)
+	{
+		if(strcmp(arr[i].word ,brr)==0)
+		{
+			return i;
+		}
+	}
+	return 0;
+}
+
+void Sort_time(save *arr)//按出现频率排序
+{
+	int temp=0;
+	char x[26]="0";
+	int i,j;
+	for(i=0;arr[i].number !=0;i++)
+	{
+		for(j=i+1;j>0;j--)
+		{
+			if(arr[j].number >arr[j-1].number )
+			{
+				temp=arr[j].number ;
+				strcpy(x,arr[j].word );
+				arr[j].number =arr[j-1].number ;
+				strcpy(arr[j].word,arr[j-1].word );
+				arr[j-1].number =temp;
+				strcpy(arr[j-1].word ,x);
+			}
+		}
+	}
+}
+
+void Sort_word(save *arr)//按单词表顺序排序
+{
+	int temp=0;
+	char x[26]="0";
+	int i,j;
+	for(i=0;arr[i].number!=0;i++)
+	{
+		for(j=i+1;j>0;j--)
+		{
+			if(strcmp(arr[j-1].word,arr[j].word )<0)
+			{
+				temp=arr[j].number ;
+				strcpy(x,arr[j].word );
+				arr[j].number =arr[j-1].number;
+				strcpy(arr[j].word ,arr[j-1].word );
+				arr[j-1].number=temp;
+				strcpy(arr[j-1].word ,x);
+			}
+		}
+	}
+}
+
+void Find()
+{
+	save *arr=(save *)calloc(1,sizeof(save));
+	char brr[26]="0";
+	save *crr;
+	int i=0,j=0;
+	char p='0';
+	FILE *fp;
+	fp =fopen("D:\hello.txt","r");//读文件
+	while(!feof(fp))
+	{
+		p=fgetc(fp);
+		if(Isalpha (&p))
+		{
+			if(isupper(p))
+			{
+				p=tolower(p);
+			}
+			brr[i]=p;
+			brr[i+1]='\0';
+			i++;
+		}
+		else
+		{
+			if(Find_index (arr,brr )==0)
+			{
+				crr=(save *)realloc(arr,(j+2)*sizeof(save));
+				arr=crr;
+				for(int i_a=j+1;i_a<j+2;i_a++)
+				{
+					arr[i_a].number =0;
+				}
+				if(strcmp("s",brr)!=0&&strcmp("t",brr)!=0)
+				{
+					strcpy(arr[j].word ,brr);
+					arr[j].number +=1;
+					i=0;j++;
+				}
+			}
+			else
+			{
+				arr[Find_index (arr,brr)].number ++;
+				i=0;
+			}
+		
+
+		}
+	}
+	Sort_time (arr);
+	Print_word1000 (arr);
+	fclose(fp);
+
+	free(arr);
+}
+
+int main()
+{
+	Find();
+	return 0;
+}
