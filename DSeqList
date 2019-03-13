@@ -1,0 +1,143 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<memory.h>
+#include<assert.h>
+#include"DSeqList.h"
+
+void Init(PDSeqList pl)//初始化
+{
+	if(pl == NULL)
+	{
+		return ;
+	}
+	pl->parr=(ELEM_TYPE*)malloc(sizeof(ELEM_TYPE)*INITSIZE);//动态分配内存
+	assert(pl->parr!=NULL);//防止申请失败
+	pl->cursize=0;
+	pl->totalsize=INITSIZE;
+}
+
+static void resize1(PDSeqList pl)//扩容方法一
+{
+	pl->parr=(ELEM_TYPE *)realloc(pl->parr ,sizeof(ELEM_TYPE)*(pl->totalsize+INITSIZE));
+	//利用realloc在原来的内存后面翻倍加一段内存
+	assert(pl->parr!=NULL);//防止重申失败
+	pl->totalsize +=INITSIZE;
+}
+
+static void resize2(PDSeqList pl)//扩容方法二
+{
+	ELEM_TYPE * newarr=(ELEM_TYPE *)malloc(sizeof(ELEM_TYPE)*(pl->totalsize+INITSIZE));
+	//重新申请内存
+	assert(newarr !=NULL);//防止重申失败
+	memcpy(newarr,pl->parr ,sizeof(ELEM_TYPE)*pl->totalsize );//将原来的数据拷贝进新内存中
+	free(pl->parr);//释放原来的内存
+	pl->parr =newarr;
+	pl->totalsize +=INITSIZE;
+}
+int InsertPos(PDSeqList pl,int pos,ELEM_TYPE  val)//按位置插入
+{
+	if(pl==NULL)
+	{
+		return 0;
+	}
+	if(pos<0||pos>pl->cursize)
+	{
+		return -1;
+	}
+	if(IsFull (pl))
+	{
+		resize1(pl);
+	}
+	for(int i=pl->cursize ;i>pos;i--)
+	{
+		pl->parr[i]=pl->parr [i-1];
+	}
+	pl->parr [pos]=val;
+	pl->cursize ++;
+		return 1;
+}
+int DeletePos(PDSeqList pl,int pos)//按位置删除
+{
+	if (pl == NULL)
+	{
+		return 0;
+	}
+	if (pos < 0 || pos > pl->cursize - 1)
+	{
+		return -1;
+	}
+	for (int i = pos; i < pl->cursize - 1; ++i)
+	{
+		pl->parr[i] = pl->parr[i + 1];
+	}
+	pl->cursize--;
+	return 1;
+}
+
+int DeleteKey(PDSeqList pl,ELEM_TYPE key)//按元素删除
+	{
+	if (pl == NULL)
+	{
+		return 0;
+	}
+	int index = Search(pl, key);
+	if (index < 0)
+	{
+		return -1;
+	}
+
+	for (int j = index; j < pl->cursize; ++j)
+	{
+		if (pl->parr[j] == key)
+		{
+			DeletePos(pl, j);
+			j--;
+		}
+	}
+	return 1;
+}
+
+int Search(PDSeqList pl,ELEM_TYPE key)//查找元素
+{
+	int rt=-1;
+
+	if(pl!=NULL)
+	{
+
+	
+	for(int i=0;i<pl->cursize ;i++)
+	{
+		if(pl->parr[i]==key)
+		{
+			rt=i;
+			break;
+		}	
+	}	
+	}
+    return rt;
+}
+
+bool IsFull(PDSeqList pl)//判满
+{
+	return pl->cursize ==pl->totalsize ;
+}
+
+void Show(PDSeqList pl)//显示
+{
+	for(int i=0;i<pl->cursize ;i++)
+	{
+		printf("%d  ",pl->parr[i]);
+	}
+	printf("\n");
+}
+
+void Clear(PDSeqList pl)//清空数据
+{
+	pl->cursize =0;
+}
+
+void Destroy(PDSeqList pl)//销毁
+{
+	Clear(pl);
+	free(pl->parr);
+}
