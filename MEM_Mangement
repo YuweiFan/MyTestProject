@@ -1,0 +1,228 @@
+#include<iostream>
+#include<string>
+
+/*
+	智能指针  
+	继承与多态
+*/
+/*
+	单例
+		1.构造函数和拷贝构造屏蔽
+		2.类中提供一个接口生成唯一对象
+*/
+template<typename T>
+class MEM_Mangement
+{
+public:
+	static MEM_Mangement<T>& getInstance()
+	{
+		return mm;
+	}
+	void* alloc(size_t size)
+	{
+		if (pool == NULL)
+		{
+			pool = (Node*)new char[size * 10];
+			Node* pCur = pool;
+			for (pCur; pCur < pool + 10 - 1; pCur = pCur + 1)
+			{
+				pCur->pnext = pCur + 1;
+			}
+			pCur->pnext = NULL;
+		}
+		Node* prt = pool;
+		pool = pool->pnext;
+		return prt;
+	}
+	void dealloc(void* ptr)
+	{
+		if (ptr == NULL)
+			return;
+		Node* mptr = (Node*)ptr;
+		mptr->pnext = pool;
+		pool = mptr;
+	}
+private:
+	MEM_Mangement(){}
+	MEM_Mangement(const MEM_Mangement<T>&);
+	class Node
+	{
+	public:
+		Node(T val = T()) :mdata(val), pnext(NULL){}
+	public:
+		T mdata;//Student mdata;
+		Node* pnext;
+	};
+	static Node* pool;
+
+	static MEM_Mangement<T> mm;
+};
+template<typename T>
+MEM_Mangement<T> MEM_Mangement<T>::mm;
+template<typename T>
+typename MEM_Mangement<T>::Node* MEM_Mangement<T>::pool = NULL;
+class Student
+{
+public:
+	Student(std::string name, std::string id, float score)
+	{
+		mname = name;
+		mid = id;
+		mscore = score;
+	}
+	Student()
+	{}
+	void* operator new(size_t size)
+	{
+		return mm.alloc(size);
+	}
+	void operator delete(void* ptr)
+	{
+		mm.dealloc(ptr);
+	}
+private:
+	std::string mname;
+	std::string mid;
+	float mscore;
+	static MEM_Mangement<Student>& mm;
+};
+MEM_Mangement<Student>& Student::mm = MEM_Mangement<Student>::getInstance();
+int main()
+{
+	Student* pst1 = new Student("zhangsan", "001", 59);
+	Student* pst2 = new Student("lisi", "002", 60);
+	Student* pst3 = new Student("wangwu", "003", 61);
+
+	delete pst1;
+	delete pst2;
+	delete pst3;
+	return 0;
+}
+#if 0
+template<typename T>
+class Queue;
+template<typename T>
+class QueueItem
+{
+public:
+	QueueItem(T val = T()) :mdata(val), pnext(NULL){}
+	void* operator new(size_t size)
+	{
+		if (pool == NULL)
+		{
+			pool = (QueueItem<T>*)new char[size * 10];
+			QueueItem<T>* pCur = pool;
+			for (pCur; pCur < pool + 10 - 1; pCur = pCur + 1)
+			{
+				pCur->pnext = pCur + 1;
+			}
+			pCur->pnext = NULL;
+		}
+		QueueItem<T>* prt = pool;
+		pool = pool->pnext;
+		return prt;
+	}
+	void operator delete(void* ptr)
+	{
+		if (ptr == NULL)
+			return;
+		QueueItem<T>* mptr = (QueueItem<T>*)ptr;
+		mptr->pnext = pool;
+		pool = mptr;
+	}
+private:
+	T mdata;
+	QueueItem<T>* pnext;
+	static QueueItem<T>* pool;
+	friend class Queue<T>;
+};
+template<typename T>
+QueueItem<T>* QueueItem<T>::pool = NULL;
+template<typename T>
+class Queue
+{
+public:
+	Queue()
+	{
+		phead = ptail = new QueueItem<T>();
+	}
+	~Queue()
+	{
+		QueueItem<T>* pCur = phead;
+		QueueItem<T>* pNext = pCur;
+		while (pCur != NULL)
+		{
+			pNext = pCur->pnext;
+			delete pCur;
+			pCur = pNext;
+		}
+		phead = ptail = NULL;
+	}
+	void push(T val)
+	{
+		QueueItem<T>* pnewitem = new QueueItem<T>(val);
+		ptail->pnext = pnewitem;
+		ptail = ptail->pnext;
+	}
+	void pop()
+	{
+		if (empty())
+		{
+			throw std::exception("queue is null!");
+		}
+		QueueItem<T>* pCur = phead->pnext;
+		phead->pnext = pCur->pnext;
+		delete pCur;
+	}
+	T front()
+	{
+		if (empty())
+		{
+			throw std::exception("queue is null!");
+		}
+		return phead->pnext->mdata;
+	}
+	T back()
+	{
+		if (empty())
+		{
+			throw std::exception("queue is null!");
+		}
+		return ptail->mdata;
+	}
+	bool empty()
+	{
+		return (phead == ptail) && (phead != NULL);
+	}
+private:
+	QueueItem<T>* phead;
+	QueueItem<T>* ptail;
+};
+int main()
+{
+	Queue<int> que;
+	for (int i = 0; i < 5; i++)
+	{
+		que.push(i + 1);
+	}
+	que.pop();
+	return 0;
+}
+
+void* operator new(size_t size)
+{
+	std::cout << "operator new(size_t)" << std::endl;
+	return malloc(size);
+}
+void operator delete(void* ptr)
+{
+	free(ptr);
+}
+
+int main()
+{
+	int* p = new int;
+	//int *p = NULL;
+	return 0;
+}
+#endif
